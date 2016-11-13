@@ -16,7 +16,7 @@ function init(api) {
     require('jquery.easing');
     require("jquery-image-explode");    
     require("./commands/boom.js");
-    require("./commands/boom.js");
+    require("./commands/system.js");
     require("./commands/shit.js");
 }
 
