@@ -12,7 +12,7 @@ function extend(to, from) {
 
 function init(api) {
     extend(exports, api);
-    api.$=api.jQuery;
+    exports.$=api.jQuery;
     require('jquery.easing');
     require("jquery-image-explode");    
     require("./commands/boom.js");
