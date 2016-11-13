@@ -73,9 +73,6 @@ function render(info, isNew) {
 //        $source.find('.text').replaceWith($bomb);
         const pos1 = $targetAvatar.offset();
         const pos2 = $bomb.offset();
-        setTimeout(function(){
-            console.log($targetAvatar.offset(),$targetAvatar)
-        },1000);
 
         if ($source.css('flex-direction') === 'row') {
             $bomb.css('left', '-20px')

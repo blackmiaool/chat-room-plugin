@@ -1,6 +1,6 @@
 {
   "name": "chat-room-plugin",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "plugins for certain chat rooms",
   "main": "index.js",
   "scripts": {
@@ -11,5 +11,8 @@
     "url": "git+https://github.com/blackmiaool/chat-room-plugin"
   },
   "author": "blackmiaool",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "jquery.easing": "^1.4.1"
+  }
 }
