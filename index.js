@@ -24,7 +24,7 @@ function init(api) {
 
 
 function getMessage(name, content, isNew) {
-    if (!content.get) {
+    if (!content.get&&typeof content==="object") {
         content.get = function (key) {
             return this[key];
         }
