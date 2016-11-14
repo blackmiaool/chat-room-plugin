@@ -49,43 +49,56 @@ function render(info, isNew) {
     setTimeout(() => {
         const $source = api.findUserMessage(from);
 
-
         let $target = api.findUserMessage(userName);
         let $targetAvatar;
-        if (!$target) {
-            console.warn(`目标${userName}不存在, 即将自爆`);
-            $target = $source;
-            $targetAvatar = $source.avatar;
+//        if (!$target) {
+//            $bomb.css('opacity', '1');
+//            return;
+//        }
+        if ($source) {
+            if (!$target) {
+                console.warn(`目标${userName}不存在, 即将自爆`);
+                $target = $source;
+                $targetAvatar = $source.avatar;
+            } else {
+                $targetAvatar = $target.avatar;
+            }
+
+
+            if (!$targetAvatar.length) {
+                console.warn(`目标${userName}头像不存在, 即将自爆`);
+                $target = $source;
+                $targetAvatar = $source.avatar;
+            }
         } else {
             $targetAvatar = $target.avatar;
         }
 
 
-        if (!$targetAvatar.length) {
-            console.warn(`目标${userName}头像不存在, 即将自爆`);
-            $target = $source;
-            $targetAvatar = $source.avatar;
-        }
 
-
-//        $source.find('.text').replaceWith($bomb);
+        //        $source.find('.text').replaceWith($bomb);
         const pos1 = $targetAvatar.offset();
         const pos2 = $bomb.offset();
 
-        if ($source.css('flex-direction') === 'row') {
-            $bomb.css('left', '-20px')
-                .css('bottom', '-20px')
-                .css('transform', 'translate(50%,-50%)');
-        } else {
-            $bomb.css('left', '20px')
-                .css('bottom', '-20px')
-                .css('transform', 'translate(-50%,-50%)');
+        if ($source) {
+            if ($source.css('flex-direction') === 'row') {
+                $bomb.css('left', '-20px')
+                    .css('bottom', '-20px')
+                    .css('transform', 'translate(50%,-50%)');
+            } else {
+                $bomb.css('left', '20px')
+                    .css('bottom', '-20px')
+                    .css('transform', 'translate(-50%,-50%)');
+            }
+        }else{
+            
         }
+
 
         const G = 0.0007;
         const time = 1000;
 
-//      x=vt+at2; v=(x-at2)/t 贴心小公式 helpful-little-format
+        //      x=vt+at2; v=(x-at2)/t 贴心小公式 helpful-little-format
         const v = (pos1.top - pos2.top - G * time * time) / time;
         $bomb.css('opacity', '0')
             .css('position', 'relative')
@@ -156,7 +169,7 @@ function render(info, isNew) {
 
                 },
             });
-    },200);
+    }, 200);
     $bomb.css('opacity', '0');
     return $bomb;
 }
