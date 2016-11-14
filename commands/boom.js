@@ -51,10 +51,12 @@ function render(info, isNew) {
 
         let $target = api.findUserMessage(userName);
         let $targetAvatar;
-//        if (!$target) {
-//            $bomb.css('opacity', '1');
-//            return;
-//        }
+        
+        if (!$target && !$source) {
+            $bomb.css('opacity', '1');
+            return;
+        }
+        
         if ($source) {
             if (!$target) {
                 console.warn(`目标${userName}不存在, 即将自爆`);
@@ -63,17 +65,19 @@ function render(info, isNew) {
             } else {
                 $targetAvatar = $target.avatar;
             }
-
-
-            if (!$targetAvatar.length) {
-                console.warn(`目标${userName}头像不存在, 即将自爆`);
-                $target = $source;
-                $targetAvatar = $source.avatar;
-            }
         } else {
             $targetAvatar = $target.avatar;
+            if(!$targetAvatar.length){
+                $bomb.css('opacity', '1');
+                return;
+            }
         }
 
+        if (!$targetAvatar.length) {
+            console.warn(`目标${userName}头像不存在, 即将自爆`);
+            $target = $source;
+            $targetAvatar = $source.avatar;
+        }
 
 
         //        $source.find('.text').replaceWith($bomb);
@@ -81,7 +85,7 @@ function render(info, isNew) {
         const pos2 = $bomb.offset();
 
         if ($source) {
-            if ($source.css('flex-direction') === 'row') {
+            if ($source.direction === 'left') {
                 $bomb.css('left', '-20px')
                     .css('bottom', '-20px')
                     .css('transform', 'translate(50%,-50%)');
@@ -90,8 +94,8 @@ function render(info, isNew) {
                     .css('bottom', '-20px')
                     .css('transform', 'translate(-50%,-50%)');
             }
-        }else{
-            
+        } else {
+
         }
 
 

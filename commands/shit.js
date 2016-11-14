@@ -52,14 +52,14 @@ function render(info, isNew) {
     setTimeout(() => {
         const $source = api.findUserMessage(from);
 
-
         let $target = api.findUserMessage(userName);
         let $targetAvatar;
-
-//        if (!$target) {
-//            $bomb.css('opacity', '1');
-//            return;
-//        }
+        
+        if (!$target && !$source) {
+            $bomb.css('opacity', '1');
+            return;
+        }
+        
         if ($source) {
             if (!$target) {
                 console.warn(`目标${userName}不存在, 即将自扔`);
@@ -70,6 +70,10 @@ function render(info, isNew) {
             }
         } else {
             $targetAvatar = $target.avatar;
+            if(!$targetAvatar.length){
+                $bomb.css('opacity', '1');
+                return;
+            }
         }
 
         if (!$targetAvatar.length) {
@@ -85,7 +89,7 @@ function render(info, isNew) {
         pos1.top += 13;
         const pos2 = $bomb.offset();
         let finalDeg;
-        console.log($target.direction)
+
         if ($target.direction==='right') {
             finalDeg = -10;
             pos1.left -= 10;

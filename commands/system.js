@@ -12,8 +12,7 @@ const render = function (content, isNew) {
         from: ""
     });
     if (info) {
-        //        console.log(info) 
-        console.log(info, isNew)
+
         $dom.append(`<span style="display: inline-block;vertical-align: top;">系统消息:</span>`)
         const $sub = api.getMessage(info.name, info.content, isNew);
         if (info.name === "boom") {
