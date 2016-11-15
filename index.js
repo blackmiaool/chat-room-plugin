@@ -11,13 +11,17 @@ function extend(to, from) {
 }
 
 function init(api) {
-    extend(exports, api);
-    exports.$=api.jQuery;
+    const jQuery=require('jquery');
+    
+    extend(exports, api);        
+    exports.$=jQuery;
+    window.jQuery=jQuery;
     require('jquery.easing');
     require("jquery-image-explode");    
     require("./commands/boom.js");
     require("./commands/system.js");
     require("./commands/shit.js");
+    require("./commands/capture.js");
 }
 
 
