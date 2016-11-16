@@ -16,6 +16,7 @@ function init(api) {
     extend(exports, api);        
     exports.$=jQuery;
     window.jQuery=jQuery;
+    window.$=jQuery;
     require('jquery.easing');
     require("jquery-image-explode");    
     require("./commands/boom.js");
