@@ -55,4 +55,7 @@ extend(exports, {
     registerMessage,
     messageList,
 });
+if(module){
+    module.exports=exports;
+}
 export default exports;
