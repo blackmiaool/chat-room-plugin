@@ -1,6 +1,6 @@
 {
   "name": "chat-room-plugin",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "plugins for certain chat rooms",
   "main": "index.js",
   "scripts": {
