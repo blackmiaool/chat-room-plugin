@@ -1,6 +1,6 @@
 {
   "name": "chat-room-plugin",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "plugins for certain chat rooms",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "jquery": "^3.1.1",
+    "jquery-image-explode": "^1.0.11",
     "jquery.easing": "^1.4.1"
   }
 }

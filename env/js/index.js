@@ -1,8 +1,39 @@
 const plugin = require("./package/index.js")
 const $ = require('jquery');
+
+function sendMessage(direction, pluginInfo, username) {
+    const $message = $(`<div data-flex="dir:${direction}" class="message-list-item">
+                <div data-flex="dir:${direction}" data-flex-box="0" class="message-container">
+                    <div data-flex-box="0" data-flex="main:top cross:top" class="avatar-container">
+                        <div>
+                            <div class="avatar" style="width: 39px; height: 39px; background-image: url(&quot;./res/5812bad543f61.jpg&quot;);"></div>
+                        </div>
+                    </div>
+                    <div style="padding: 0px 10px; width: 100%; text-align: ${direction};"><span class="nickname">${username} 18:31:51</span>
+                        <div class="message">
+                            <div class="triangle-${direction}-outer"></div>
+                            <div class="triangle-${direction}-inner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+    $message.find(".message").empty().append(plugin.getMessage(pluginInfo.name, pluginInfo.content, true));
+    $("#message-list").append($message);
+    $("#message-list").scrollTop(100000);
+}
 setTimeout(function () {
 
     $("#message-list").scrollTop(100000);
+    $("#send-btn").on("click", function () {
+        const content = $("#message-input").val();
+        const pluginInfo = getPluginMessageInfo({
+            content,
+            from: {
+                username: "MD纸一张"
+            }
+        });
+        sendMessage('left', pluginInfo, "MD纸一张");
+    });
 
     function onKeyUp(e) {
         if (e.originalEvent.code === "Enter") {
@@ -16,30 +47,13 @@ setTimeout(function () {
             console.log(pluginInfo);
             if (pluginInfo) {
                 setTimeout(function () {
-                    const $message = $(`<div data-flex="dir:right" class="message-list-item">
-                <div data-flex="dir:right" data-flex-box="0" class="message-container">
-                    <div data-flex-box="0" data-flex="main:top cross:top" class="avatar-container">
-                        <div>
-                            <div class="avatar" style="width: 39px; height: 39px; background-image: url(&quot;./res/5812bad543f61.jpg&quot;);"></div>
-                        </div>
-                    </div>
-                    <div style="padding: 0px 10px; width: 100%; text-align: right;"><span class="nickname">blackmiaool 18:31:51</span>
-                        <div class="message">
-                            <div class="triangle-right-outer"></div>
-                            <div class="triangle-right-inner"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>`);
-                    $message.find(".message").empty().append(plugin.getMessage(pluginInfo.name, pluginInfo.content, true));
-                    $("#message-list").append($message);
-                    $("#message-list").scrollTop(100000);
+                    sendMessage('right', pluginInfo, 'blackmiaool');
                 });
             }
 
         }
     }
-    $("#message-input").val("boom(MD)");
+    $("#message-input").val("capture(MD)");
     $("#message-input").on("keyup", onKeyUp);
 });
 
@@ -102,9 +116,9 @@ function findUserMessage(userName) {
             }
         }
     }
-    if($item){
-        $item.avatar = $item.find(".avatar");    
-    }    
+    if ($item) {
+        $item.avatar = $item.find(".avatar");
+    }
 
     return $item;
 }

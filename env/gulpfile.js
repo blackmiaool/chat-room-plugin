@@ -7,7 +7,7 @@ const less = require('gulp-less');
 const uglify = require('gulp-uglify');
 const cleanCSS = require('gulp-clean-css');
 const rename = require("gulp-rename");
-let livereload = require('gulp-livereload');
+const livereload = require('gulp-livereload');
 const browserify = require('gulp-browserify');
 
 function get_babel_params() {
@@ -18,7 +18,7 @@ function get_babel_params() {
         //        optional: ['runtime'],
     }
 }
-gulp.task('js', function () {
+gulp.task('js',['top'], function () {
     var babel_pipe = babel(get_babel_params());
     babel_pipe.on('error', function (ee) {
         gutil.log(ee);
@@ -44,10 +44,12 @@ gulp.task('top', function () {
     return gulp.src(['../**/*.js','!../env/**/*.js','!../node_modules/**/*.js'])
         .pipe(babel_pipe)
         .pipe(gulp.dest('js/package'))
-        .pipe(livereload())
+
 
 });
-
+gulp.task('reload', function () {
+    gulp.src("").pipe(livereload());
+});
 
 
 livereload.listen();
@@ -55,3 +57,4 @@ gulp.task('default', function () {
     gulp.start(["top",'js']);
 });
 gulp.watch('js/index.js', ['js']);
+gulp.watch('../commands/*.js', ['top','js']);

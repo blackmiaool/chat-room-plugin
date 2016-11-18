@@ -30,6 +30,7 @@ function init(api) {
     require("./commands/boom.js");
     require("./commands/system.js");
     require("./commands/shit.js");
+    require("./commands/capture.js");
 }
 
 function getMessage(name, content, isNew) {
