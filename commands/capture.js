@@ -7,6 +7,7 @@ const $ = api.$;
 
 const name = 'capture';
 const showBase = true;
+const thingWidth = 40;
 
 function process(message) {
     const match = message.content.trim().match(/^([a-zA-Z0-9_-]+)\s*\(([\s\S]*)\)\s*;?\s*$/);
@@ -15,7 +16,7 @@ function process(message) {
         content: match[2],
     };
 }
-console.log(123456)
+
 function render(info, isNew) {
     const $thing = $thingTpl.clone();
 
@@ -50,12 +51,12 @@ function render(info, isNew) {
 
         let $target = api.findUserMessage(userName);
         let $targetAvatar;
-        
+
         if (!$target && !$source) {
             $thing.css('opacity', '1');
             return;
         }
-        
+
         if ($source) {
             if (!$target) {
                 console.warn(`目标${userName}不存在, 即将自爆`);
@@ -66,7 +67,7 @@ function render(info, isNew) {
             }
         } else {
             $targetAvatar = $target.avatar;
-            if(!$targetAvatar.length){
+            if (!$targetAvatar.length) {
                 $thing.css('opacity', '1');
                 return;
             }
@@ -78,10 +79,14 @@ function render(info, isNew) {
             $targetAvatar = $source.avatar;
         }
 
+        const {
+            direction
+        } = $target
 
-        //        $source.find('.text').replaceWith($thing);
         const pos1 = $targetAvatar.offset();
         const pos2 = $thing.offset();
+        pos2.left -= ($targetAvatar.width() - thingWidth) / 2;
+        pos2.top -= ($targetAvatar.height() - thingWidth) / 2;
 
         if ($source) {
             if ($source.direction === 'left') {
@@ -103,7 +108,31 @@ function render(info, isNew) {
 
         //      x=vt+at2; v=(x-at2)/t 贴心小公式 helpful-little-format
         const v = (pos1.top - pos2.top - G * time * time) / time;
-        $thing.css('opacity', '0')
+
+        const avatarWidth = $targetAvatar.width();
+
+        const bounceDistance = avatarWidth / 2 + thingWidth / 2;
+        const floatHeight = bounceDistance * 1.5;
+        let step1Rotate;
+        const bounceRate = 1 / 8;
+        const shakeDeg = 15;
+        const $redState = $(`<div style="opacity:0;height:10px;width:10px;position:absolute;left:0;right:0;top:0;bottom:0;margin:auto;border-radius:5px;background-color:rgba(200,30,70,0.7);"></div>`);
+        const $shadow = $(`<div style="height:60px;
+                                        width:60px;     
+                                        position: absolute;
+                                        top: 0;
+                                        overflow: hidden;
+                                        transform:rotate(45deg) translateX(27px) translateY(25px);
+                                        filter: blur(20px);">
+                                        <div style="width: 200px;
+                                            height: 200px;
+                                            background-color: rgb(200,30,70);
+                                            position: absolute;
+                                            left: -180px;
+                                            top: -180px;">
+                                        </div>
+                                    </div>`);
+        const animate = $thing.css('opacity', '0')
             .css('position', 'relative')
             .animate({
                 opacity: '1',
@@ -118,60 +147,243 @@ function render(info, isNew) {
             })
             .delay(200)
             .animate({
-                left: pos1.left - pos2.left,
                 borderSpacing: 1000,
             }, {
                 duration: 1000,
                 easing: 'linear',
                 step: function (now, fx) {
-                    if (fx.prop === 'borderSpacing') {
-                        $thing.css({
-                            transform: `rotate(${now / 1000 * 1080}deg)`,
-                            top: v * now + G * now * now,
-                        });
+                    const left = (pos1.left - pos2.left) * now / 1000;
+                    const top = v * now + G * now * now;
+                    $thing.css({
+                        transform: `rotate(${now / 1000 * 1080}deg)`,
+                        top,
+                        left,
+                    });
+                    const distance = Math.sqrt(Math.pow(pos1.left - pos2.left - left, 2) + Math.pow(pos1.top - pos2.top - top, 2));
+                    if (distance < bounceDistance) {
+                        animate.stop();
+                        step1Rotate = parseInt($thing.css("transform").match(/\d+/));
+                        $thing.css("border-spacing", 0);
                     }
+
+
                 },
-                done: function () {
-                    $(this).css('transform', '')
-                        .css('borderSpacing', '1000')
-                        .css('left', pos1.left - pos2.left - 20)
-                        .css('top', (pos1.top - pos2.top) + 20)
-                        .css('transform', 'translate(50%,-50%)');
-                },
-            })
-            .animate({
-                opacity: '0',
-                borderSpacing: '1500',
+
+            }).animate({
+                left: pos1.left - pos2.left,
+                top: pos1.top - pos2.top - floatHeight,
+                borderSpacing: 1000,
             }, {
                 duration: 100,
                 easing: 'linear',
                 step: function (now, fx) {
                     if (fx.prop === 'borderSpacing') {
-                        $thing.css('transform', `translate(50%,-50%) scale(${now / 1000})`);
+                        $thing.css('transform', `rotate(${(1080-step1Rotate)*now/1000+step1Rotate}deg)`);
                     }
+
+
+
                 },
+                done: function () {
+
+                    $shadow.css({
+                        left: $thing.css("left"),
+                        top: $thing.css("top"),
+                    })
+                    $(this).append($redState);
+                    $(this).after($shadow);
+                    $redState.animate({
+                        opacity: 1
+                    }, {
+                        duration: 1000,
+                    });
+
+                    $thing.css("border-spacing", 0);
+
+                },
+            })
+            .animate({
+                borderSpacing: 1000,
+            }, {
+                duration: 100000,
+                easing: 'linear',
                 start: function () {
+                    const radius = $targetAvatar.width() * 1.3 / 2;
                     $targetAvatar.explode({
-                        minWidth: 4,
-                        maxWidth: 8,
-                        radius: 25,
-                        minRadius: 3,
+                        minWidth: 3,
+                        maxWidth: 6,
+                        radius,
+                        minRadius: 0,
                         release: false,
                         fadeTime: 300,
                         recycle: false,
                         recycleDelay: 500,
-                        explodeTime: 331,
+                        explodeTime: 231,
                         round: false,
                         minAngle: 0,
-                        maxAngle: 360,
-                        gravity: 2.5,
-                        groundDistance: 30,
-                    });
+                        maxAngle: 120,
+                        gravity: -1,
+                        groundDistance: floatHeight,
+                        land: false,
+                        checkOutBound: function (rag) {
+                            //
+                            if (rag.biasy < radius - (rag.biasx + rag.width / 2) || rag.biasy < (rag.biasx + rag.width / 2) - radius) {
+                                return true;
+                            }
+                            return false;
+                        },
+                        finish: function () {
+                            animate.stop();
+
+                        }
+                    })
                 },
                 done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .delay(300)
+            .animate({
+                left: pos1.left - pos2.left,
+                top: pos1.top - pos2.top,
+                borderSpacing: 1000,
+            }, {
+                duration: Math.sqrt(2 * floatHeight * G) * 1000,
+                easing: "easeInQuad",
+                start: function () {
+                    $shadow.remove();
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .animate({
+                left: pos1.left - pos2.left,
+                top: pos1.top - pos2.top - floatHeight * bounceRate,
+                borderSpacing: 1000,
+            }, {
+                duration: Math.sqrt(2 * floatHeight * bounceRate / G),
+                easing: "easeOutQuad",
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .animate({
+                left: pos1.left - pos2.left,
+                top: pos1.top - pos2.top,
+                borderSpacing: 1000,
+            }, {
+                duration: Math.sqrt(2 * floatHeight * bounceRate / G),
+                easing: "easeInQuad",
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .delay(500)
+            .animate({
+                left: pos1.left - pos2.left - shakeDeg / 360 * Math.PI * thingWidth,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeInQuad",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${-shakeDeg*now/1000}deg)`);
+                    }
 
                 },
-            });
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .animate({
+                left: pos1.left - pos2.left,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeOutBack",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${-shakeDeg*(1000-now)/1000}deg)`);
+                    }
+
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .delay(500)
+            .animate({
+                left: pos1.left - pos2.left + shakeDeg / 360 * Math.PI * thingWidth,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeInQuad",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${shakeDeg*now/1000}deg)`);
+                    }
+
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .animate({
+                left: pos1.left - pos2.left,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeOutBack",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${shakeDeg*(1000-now)/1000}deg)`);
+                    }
+
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .delay(500)
+            .animate({
+                left: pos1.left - pos2.left - shakeDeg / 360 * Math.PI * thingWidth,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeInQuad",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${-shakeDeg*now/1000}deg)`);
+                    }
+
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                }
+            })
+            .animate({
+                left: pos1.left - pos2.left,
+                borderSpacing: 1000,
+            }, {
+                duration: 300,
+                easing: "easeOutBack",
+                step: function (now, fx) {
+                    if (fx.prop === 'borderSpacing') {
+                        $thing.css('transform', `rotate(${-shakeDeg*(1000-now)/1000}deg)`);
+                    }
+
+                },
+                done: function () {
+                    $thing.css("border-spacing", 0);
+                    $redState.animate({
+                        opacity: 0
+                    }, {
+                        duration: 1000,
+                    });
+                }
+            })
+
     }, 200);
     $thing.css('opacity', '0');
     return $thing;
@@ -184,4 +396,4 @@ api.registerMessage({
 });
 
 
-const $thingTpl = $(`<img style="width:40px;" class="plugin-thing"  src="data:image/png;base64,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">`);
+const $thingTpl = $(`<div class="plugin-thing"><img style="width:${thingWidth};display:block;"  src="data:image/png;base64,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"></div>`);

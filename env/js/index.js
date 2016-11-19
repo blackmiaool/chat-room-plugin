@@ -6,7 +6,7 @@ function sendMessage(direction, pluginInfo, username) {
                 <div data-flex="dir:${direction}" data-flex-box="0" class="message-container">
                     <div data-flex-box="0" data-flex="main:top cross:top" class="avatar-container">
                         <div>
-                            <div class="avatar" style="width: 39px; height: 39px; background-image: url(&quot;./res/5812bad543f61.jpg&quot;);"></div>
+                            <div class="avatar" style=" background-image: url(&quot;./res/5812bad543f61.jpg&quot;);"></div>
                         </div>
                     </div>
                     <div style="padding: 0px 10px; width: 100%; text-align: ${direction};"><span class="nickname">${username} 18:31:51</span>
@@ -21,6 +21,18 @@ function sendMessage(direction, pluginInfo, username) {
     $("#message-list").append($message);
     $("#message-list").scrollTop(100000);
 }
+setTimeout(function () {
+    const content = $("#message-input").val();
+    console.log(content)
+    const pluginInfo = getPluginMessageInfo({
+        content,
+        from: {
+            username: "MD纸一张"
+        }
+    });
+    console.log(pluginInfo)
+    sendMessage('right', pluginInfo, "blackmiaool");
+}, 500);
 setTimeout(function () {
 
     $("#message-list").scrollTop(100000);
@@ -53,7 +65,7 @@ setTimeout(function () {
 
         }
     }
-    $("#message-input").val("capture(MD)");
+    $("#message-input").val("capture(york)");
     $("#message-input").on("keyup", onKeyUp);
 });
 

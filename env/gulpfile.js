@@ -9,6 +9,7 @@ const cleanCSS = require('gulp-clean-css');
 const rename = require("gulp-rename");
 const livereload = require('gulp-livereload');
 const browserify = require('gulp-browserify');
+const cached=require('gulp-cached');
 
 function get_babel_params() {
     return {
@@ -25,10 +26,11 @@ gulp.task('js',['top'], function () {
         babel_pipe.end();
     });
 
-    return gulp.src(['js/*.js'])
+    return gulp.src(['js/index.js'])
         .pipe(babel_pipe)
         .pipe(browserify({
-            insertGlobals: false,
+//            insertGlobals: true,
+        noParse:['jquery.js']
         }))
         .pipe(gulp.dest('res/'))
         .pipe(livereload())
@@ -42,6 +44,7 @@ gulp.task('top', function () {
     });
 
     return gulp.src(['../**/*.js','!../env/**/*.js','!../node_modules/**/*.js'])
+        .pipe(cached('html'))
         .pipe(babel_pipe)
         .pipe(gulp.dest('js/package'))
 

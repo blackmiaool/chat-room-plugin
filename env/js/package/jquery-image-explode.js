@@ -6,6 +6,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     "use strict";
 
     var wrapperName = "explode-wrapper";
+    if (!$) {
+        console.error("jQuery is needed.");
+        return;
+    }
     $.fn.explodeRestore = function () {
         this.each(function () {
             //explode separately
@@ -52,7 +56,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             _opt$groundDistance = _opt.groundDistance,
             groundDistance = _opt$groundDistance === undefined ? 400 : _opt$groundDistance,
             _opt$ignoreCompelete = _opt.ignoreCompelete,
-            ignoreCompelete = _opt$ignoreCompelete === undefined ? false : _opt$ignoreCompelete;
+            ignoreCompelete = _opt$ignoreCompelete === undefined ? false : _opt$ignoreCompelete,
+            _opt$land = _opt.land,
+            land = _opt$land === undefined ? true : _opt$land,
+            checkOutBound = _opt.checkOutBound,
+            finish = _opt.finish;
         var _opt2 = opt,
             maxWidth = _opt2.maxWidth;
 
@@ -237,11 +245,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         $target.detach();
 
         var biasVy = 0;
+
         explode(function () {
             if (release) {
                 doRelease();
             } else if (recycle) {
                 doRecycle();
+            } else {
+                finish && finish();
             }
         });
 
@@ -321,7 +332,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
                     rag.biasx = rag.translateX0;
                     rag.biasy = rag.translateY0;
-                    rag.transYMax = ctxHeight / 2 + groundDistance - rag.height / 2;
+                    if (gravity) {
+                        rag.transYMax = ctxHeight / 2 + groundDistance - rag.height / 2;
+                    }
                 });
             }
 
@@ -361,11 +374,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                         rag.biasy += (rag.vy + biasVy) * ratio;
 
                         if (gravity) {
-                            if (rag.biasy > rag.transYMax) {
+                            if (checkOutBound && checkOutBound(rag) || rag.biasy > rag.transYMax || rag.biasy < rag.height / 2) {
                                 leftCnt--;
                                 rag.land = true;
                                 rag.lastAngle = rag.finalAngleRad * angleRatio;
-                                rag.biasy = rag.transYMax;
+
+                                if (land) {
+                                    rag.biasy = gravity > 0 ? rag.transYMax : rag.height / 2;
+                                } else {
+                                    rag.biasy = rag.transYMax * 2; //hide
+                                }
                             }
                         }
                     }

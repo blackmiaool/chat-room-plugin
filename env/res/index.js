@@ -8,11 +8,23 @@ var plugin = require("./package/index.js");
 var $ = require('jquery');
 
 function sendMessage(direction, pluginInfo, username) {
-    var $message = $("<div data-flex=\"dir:" + direction + "\" class=\"message-list-item\">\n                <div data-flex=\"dir:" + direction + "\" data-flex-box=\"0\" class=\"message-container\">\n                    <div data-flex-box=\"0\" data-flex=\"main:top cross:top\" class=\"avatar-container\">\n                        <div>\n                            <div class=\"avatar\" style=\"width: 39px; height: 39px; background-image: url(&quot;./res/5812bad543f61.jpg&quot;);\"></div>\n                        </div>\n                    </div>\n                    <div style=\"padding: 0px 10px; width: 100%; text-align: " + direction + ";\"><span class=\"nickname\">" + username + " 18:31:51</span>\n                        <div class=\"message\">\n                            <div class=\"triangle-" + direction + "-outer\"></div>\n                            <div class=\"triangle-" + direction + "-inner\"></div>\n                        </div>\n                    </div>\n                </div>\n            </div>");
+    var $message = $("<div data-flex=\"dir:" + direction + "\" class=\"message-list-item\">\n                <div data-flex=\"dir:" + direction + "\" data-flex-box=\"0\" class=\"message-container\">\n                    <div data-flex-box=\"0\" data-flex=\"main:top cross:top\" class=\"avatar-container\">\n                        <div>\n                            <div class=\"avatar\" style=\" background-image: url(&quot;./res/5812bad543f61.jpg&quot;);\"></div>\n                        </div>\n                    </div>\n                    <div style=\"padding: 0px 10px; width: 100%; text-align: " + direction + ";\"><span class=\"nickname\">" + username + " 18:31:51</span>\n                        <div class=\"message\">\n                            <div class=\"triangle-" + direction + "-outer\"></div>\n                            <div class=\"triangle-" + direction + "-inner\"></div>\n                        </div>\n                    </div>\n                </div>\n            </div>");
     $message.find(".message").empty().append(plugin.getMessage(pluginInfo.name, pluginInfo.content, true));
     $("#message-list").append($message);
     $("#message-list").scrollTop(100000);
 }
+setTimeout(function () {
+    var content = $("#message-input").val();
+    console.log(content);
+    var pluginInfo = getPluginMessageInfo({
+        content: content,
+        from: {
+            username: "MD纸一张"
+        }
+    });
+    console.log(pluginInfo);
+    sendMessage('right', pluginInfo, "blackmiaool");
+}, 500);
 setTimeout(function () {
 
     $("#message-list").scrollTop(100000);
@@ -48,7 +60,7 @@ setTimeout(function () {
             })();
         }
     }
-    $("#message-input").val("capture(MD)");
+    $("#message-input").val("capture(york)");
     $("#message-input").on("keyup", onKeyUp);
 });
 
@@ -342,6 +354,7 @@ var $ = _2.default.$;
 
 var name = 'capture';
 var showBase = true;
+var thingWidth = 40;
 
 function process(message) {
     var match = message.content.trim().match(/^([a-zA-Z0-9_-]+)\s*\(([\s\S]*)\)\s*;?\s*$/);
@@ -350,7 +363,7 @@ function process(message) {
         content: match[2]
     };
 }
-console.log(123456);
+
 function render(info, isNew) {
     var $thing = $thingTpl.clone();
 
@@ -413,9 +426,14 @@ function render(info, isNew) {
             $targetAvatar = $source.avatar;
         }
 
-        //        $source.find('.text').replaceWith($thing);
+        var _$target = $target,
+            direction = _$target.direction;
+
+
         var pos1 = $targetAvatar.offset();
         var pos2 = $thing.offset();
+        pos2.left -= ($targetAvatar.width() - thingWidth) / 2;
+        pos2.top -= ($targetAvatar.height() - thingWidth) / 2;
 
         if ($source) {
             if ($source.direction === 'left') {
@@ -430,7 +448,17 @@ function render(info, isNew) {
 
         //      x=vt+at2; v=(x-at2)/t 贴心小公式 helpful-little-format
         var v = (pos1.top - pos2.top - G * time * time) / time;
-        $thing.css('opacity', '0').css('position', 'relative').animate({
+
+        var avatarWidth = $targetAvatar.width();
+
+        var bounceDistance = avatarWidth / 2 + thingWidth / 2;
+        var floatHeight = bounceDistance * 1.5;
+        var step1Rotate = void 0;
+        var bounceRate = 1 / 8;
+        var shakeDeg = 15;
+        var $redState = $('<div style="opacity:0;height:10px;width:10px;position:absolute;left:0;right:0;top:0;bottom:0;margin:auto;border-radius:5px;background-color:rgba(200,30,70,0.7);"></div>');
+        var $shadow = $('<div style="height:60px;\n                                        width:60px;     \n                                        position: absolute;\n                                        top: 0;\n                                        overflow: hidden;\n                                        transform:rotate(45deg) translateX(27px) translateY(25px);\n                                        filter: blur(20px);">\n                                        <div style="width: 200px;\n                                            height: 200px;\n                                            background-color: rgb(200,30,70);\n                                            position: absolute;\n                                            left: -180px;\n                                            top: -180px;">\n                                        </div>\n                                    </div>');
+        var animate = $thing.css('opacity', '0').css('position', 'relative').animate({
             opacity: '1'
         }, {
             duration: 500,
@@ -439,52 +467,214 @@ function render(info, isNew) {
                 $(this).css('left', '').css('bottom', '').css('transform', '');
             }
         }).delay(200).animate({
-            left: pos1.left - pos2.left,
             borderSpacing: 1000
         }, {
             duration: 1000,
             easing: 'linear',
             step: function step(now, fx) {
-                if (fx.prop === 'borderSpacing') {
-                    $thing.css({
-                        transform: 'rotate(' + now / 1000 * 1080 + 'deg)',
-                        top: v * now + G * now * now
-                    });
+                var left = (pos1.left - pos2.left) * now / 1000;
+                var top = v * now + G * now * now;
+                $thing.css({
+                    transform: 'rotate(' + now / 1000 * 1080 + 'deg)',
+                    top: top,
+                    left: left
+                });
+                var distance = Math.sqrt(Math.pow(pos1.left - pos2.left - left, 2) + Math.pow(pos1.top - pos2.top - top, 2));
+                if (distance < bounceDistance) {
+                    animate.stop();
+                    step1Rotate = parseInt($thing.css("transform").match(/\d+/));
+                    $thing.css("border-spacing", 0);
                 }
-            },
-            done: function done() {
-                $(this).css('transform', '').css('borderSpacing', '1000').css('left', pos1.left - pos2.left - 20).css('top', pos1.top - pos2.top + 20).css('transform', 'translate(50%,-50%)');
             }
+
         }).animate({
-            opacity: '0',
-            borderSpacing: '1500'
+            left: pos1.left - pos2.left,
+            top: pos1.top - pos2.top - floatHeight,
+            borderSpacing: 1000
         }, {
             duration: 100,
             easing: 'linear',
             step: function step(now, fx) {
                 if (fx.prop === 'borderSpacing') {
-                    $thing.css('transform', 'translate(50%,-50%) scale(' + now / 1000 + ')');
+                    $thing.css('transform', 'rotate(' + ((1080 - step1Rotate) * now / 1000 + step1Rotate) + 'deg)');
                 }
             },
+            done: function done() {
+
+                $shadow.css({
+                    left: $thing.css("left"),
+                    top: $thing.css("top")
+                });
+                $(this).append($redState);
+                $(this).after($shadow);
+                $redState.animate({
+                    opacity: 1
+                }, {
+                    duration: 1000
+                });
+
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            borderSpacing: 1000
+        }, {
+            duration: 100000,
+            easing: 'linear',
             start: function start() {
+                var radius = $targetAvatar.width() * 1.3 / 2;
                 $targetAvatar.explode({
-                    minWidth: 4,
-                    maxWidth: 8,
-                    radius: 25,
-                    minRadius: 3,
+                    minWidth: 3,
+                    maxWidth: 6,
+                    radius: radius,
+                    minRadius: 0,
                     release: false,
                     fadeTime: 300,
                     recycle: false,
                     recycleDelay: 500,
-                    explodeTime: 331,
+                    explodeTime: 231,
                     round: false,
                     minAngle: 0,
-                    maxAngle: 360,
-                    gravity: 2.5,
-                    groundDistance: 30
+                    maxAngle: 120,
+                    gravity: -1,
+                    groundDistance: floatHeight,
+                    land: false,
+                    checkOutBound: function checkOutBound(rag) {
+                        //
+                        if (rag.biasy < radius - (rag.biasx + rag.width / 2) || rag.biasy < rag.biasx + rag.width / 2 - radius) {
+                            return true;
+                        }
+                        return false;
+                    },
+                    finish: function finish() {
+                        animate.stop();
+                    }
                 });
             },
-            done: function done() {}
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).delay(300).animate({
+            left: pos1.left - pos2.left,
+            top: pos1.top - pos2.top,
+            borderSpacing: 1000
+        }, {
+            duration: Math.sqrt(2 * floatHeight * G) * 1000,
+            easing: "easeInQuad",
+            start: function start() {
+                $shadow.remove();
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            left: pos1.left - pos2.left,
+            top: pos1.top - pos2.top - floatHeight * bounceRate,
+            borderSpacing: 1000
+        }, {
+            duration: Math.sqrt(2 * floatHeight * bounceRate / G),
+            easing: "easeOutQuad",
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            left: pos1.left - pos2.left,
+            top: pos1.top - pos2.top,
+            borderSpacing: 1000
+        }, {
+            duration: Math.sqrt(2 * floatHeight * bounceRate / G),
+            easing: "easeInQuad",
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).delay(500).animate({
+            left: pos1.left - pos2.left - shakeDeg / 360 * Math.PI * thingWidth,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeInQuad",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + -shakeDeg * now / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            left: pos1.left - pos2.left,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeOutBack",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + -shakeDeg * (1000 - now) / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).delay(500).animate({
+            left: pos1.left - pos2.left + shakeDeg / 360 * Math.PI * thingWidth,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeInQuad",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + shakeDeg * now / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            left: pos1.left - pos2.left,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeOutBack",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + shakeDeg * (1000 - now) / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).delay(500).animate({
+            left: pos1.left - pos2.left - shakeDeg / 360 * Math.PI * thingWidth,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeInQuad",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + -shakeDeg * now / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+            }
+        }).animate({
+            left: pos1.left - pos2.left,
+            borderSpacing: 1000
+        }, {
+            duration: 300,
+            easing: "easeOutBack",
+            step: function step(now, fx) {
+                if (fx.prop === 'borderSpacing') {
+                    $thing.css('transform', 'rotate(' + -shakeDeg * (1000 - now) / 1000 + 'deg)');
+                }
+            },
+            done: function done() {
+                $thing.css("border-spacing", 0);
+                $redState.animate({
+                    opacity: 0
+                }, {
+                    duration: 1000
+                });
+            }
         });
     }, 200);
     $thing.css('opacity', '0');
@@ -497,7 +687,7 @@ _2.default.registerMessage({
     render: render
 });
 
-var $thingTpl = $('<img style="width:40px;" class="plugin-thing"  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAMAAABHPGVmAAACH1BMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8AAAAYWsG4CQm+CAi7CAgaZswddNgZYMcaZMoaYsgcbtMbas/ECAgcbNEdd9sbaM0ICAgdctbBCAjg4OAeet0gguMffuAccdTz8/MYXcTt7e3o6OgghOYfgOIVUa4ffN7a2trIBwcgh+j8/Pzl5eXj4+Pc3NzPJye1CAjY2NjT09MTAAD4+Pjv7+9Kn+36+vr29vbNzc0LAAAZXccXWrQWVrJAQEATExNjrvJWpu+vr68BBQpQou7BwcEFFy4tLS0FEyNdq/FFm+sGGzYcHBwCCRINDQ0hiuurq6tmZmYJKEkmJiYDDRpEBAQdAQBts/HFxcUTSZddXV1SUlIHID8YXreysrION3INN2UML1+rBwdQAwMjAQEwAQBCmOi5ubmmpqYRR38PO3xtbW0hISHJFRVuBQVxuPgijvItjOejo6MRQoh7e3t0dHQKJVBISEibBweMBgZ7BQUqAQE2lOoXWLoWXagVUqafn58USp8SRJOQkJAUTY4PPnEKK1lXV1dgCAjNBwdbAwM6AgEccckZaLsVVZyYmJiIiIgLMFU2NjYSIC1/GBgyXIMjQFofMkLVKChuFBRFpftTl9NgnNBck8QaaMIvcrFr6NJbAAAAHHRSTlMABPnlyQztq3jQTx+HZkUnuthaGbM8lcETbDOiuwqmSQAACKBJREFUaN6s1/tPUmEcx3HULpZadrHr+ZxARLloZBoVOWyNFmUTdF0oohjTGFAUSQhYujLLMi+l6dS8VFv3e/2Bfc9BlCcPHLq8f3DO8fDi+zxnj0ORc5vWbS9eXbpiA7WidGdxSdk2xf+trHArlpdfWrjjPwErN6YAp9vje32Teu3zuFPS5rV5/0ysK4WQ39f9sq2vr6+tkTp4sLGxra9udCrshdDqsn8aYjuE3r7v+tLX1kaAIFB7KbO5rs7c+GLKBWrVxry/JQpBud+fvniu6YkEUdfQ0FBba1bf9IMq+SumBNTHb/dOXzzT1CRFkFBroNTmUXGctX9M7MgXiCv3rpBBg2QhhAw/BKag6A+AovV5O4WjICJpXCIhC7F79+569Us3gGLF+k25GVtsdgDe7wKRNO7LEfVVVVXqSScAm70wByKvIPApDnygjSIiacgSlF6vrw8DgdnEVnkj/7PVGnR+FQUiBIMEWYLSavUhBCyzsQI5A++sVuu7D2eEaIqmS133k0PIE9rqar1n0GKxzBVkN1Z9tlKf0HWOZiDiUldOhFYkqsvHbLMWKrYmG1IwYxV795YAEp6kjiInolzrHbKIBVZkNkoD1oVsP7ue0FnkTpRT1ZF5y0IjOzMZhXGL5a6YxQID80DJEpRmzD6rS2XfmOHCtVl0iw3CnPtGiYSmAp1L640okjKKQMZSc+6DzBRyhEbrHU5fr8qXfHg7dUyJqDmNUGclqGrPHLt+UELZ0Gtk0wWnzCRkJcpTRGV5OKAzssW2LrvYR4TXsIptso4EeaKyslIznRDWs9nLWKPIrlMuy2h7VZsLQUXjEutVyGOQrcNKqeyvDDkQFZU3g0ap5b2rmf+0doskorK/+o1gT1skBEMpmY4dZUVAl0GZVGcnyIgGVZKLjSObmUmAEZ1Kql22bnUWgtIMxFWSGW3IT5+kGOi27cqgTKkzE2T4EtJGp70H2MgM4jOPYkhaiUfVGQiq3DMvbfRinPcj7VAKAbpAXjhjxl0SqRLhekmC0rhjKqk1ynn/U55vBdYtIkBYvAV9cckVR9EiTZhM43bJFZ22aRNPeZGfMtYCL8QrqnYSQ8s/VAz9ekmCqohgRrls9GFMkEGNA5tSzy/c5uQVZXjpDChZYtg+rclAULypNWwbUrHGvL+VT2YCVieNTUC3SAgZXgc70xYMxl0t+syEkGPcn2CW2KIOPtVA6uhLAPPSFaUOoVd1VGzX0YAzJEOITA9idHJiqjmETPxSwPqF3fI0pN2C9dWuhPh65QwiRFCLRHllKBKNRkIVGhPPNI1epfCxOoMensmZ3K88oJu9BdX9NIxq2O7TVDNEZcSNhdwRB890yCMczQz6U39n92sdIBIUEckLROMJBl0tWmajND1g6mGHcYTcI7Yw/3utyeerGP46cYr0a7BqbFTPngXvgtCF65cvX78AIRdPMcyYYxnicIrfW9bApxaI7NfgUy+AmoeHObHDD2sAOJ/y8nmxmRCgW4ageMG4xqV1TVByQAYAhWI9cIOELASl8QB4Rm994Gr7gwdnm0/Qr8/EHZNtAlgp3CmGrARl6kka+zo6ju3juP3N7ecPJ5V+WcQEFNEN7DXIEKYKJ/Cc3vz2MW6h8+0nOe4xAFnEAZQptsClzkpQNEgNzXH7CLdYczv9qAEmZBEnShSbEa7SZiEohwt4xHEdNMdSt5o57jLgNsltlxdb6FLx6bMQlDAx9nH7z3JM7XQsAGQfYz9KFRswcEOsZbHWVIeS9QN3aIOaWaTjAMedAiYOyeTHGkUBcukxx53dzyLNVznuDnKpIEeEnq3bx1lkzy2Oe4NcWvWrVTNoTRwIw3Di2qpVtO3ulrbM+xMCuYR4CUSFhBT1koAguYRQyUUUeu2CPZWW/oAe9ljZv7kzY8Karc1EnedQi5fH7/2+mUyie0iMvGSwn0QTAfh0nPS8ZO7yuDQRLK4LrIgAB4jo3ynJMTF443UiIKSNr2JBRADo0bVItjHparQB2ETAE37QxfgmlLwBMzpOj7lC6AQvWY6F2EM7wJVyhVAomQBgL1lg2f8AxoUKzzCGAd1W6giIkIB/ZPvhIR3jLneEAAodhmGaIw0/2VYvljwCeKGv1v1k7rrTyT1bmK8AXFIAc3RNttV3AEdsmQF45R/Onc4dj6SOGSlgZNyZ3d6EXbQU4IOISQCE/78RkQI87ugvAH6Q+E1KWuAbaRA+mGMoaEi329cjfpBo4YmUYQZGHCVJFIMiWMQea0hP72k42xzu7FIWN8YWmksK4WHpurs53Km8KeU0S6QsXSJy8LD0RXqsr8Inpem706nbJyI8Y+PQY9SyWwciGXvTEH2gZ7cO18C7ZMmIT68+GKRp8bxCyZI0rIGuofbvxlSXW4hpcof1wGYrBXiT6RiysJhjEKCy/bDAlhtWjxZiWWOgvf3YYynP4aUNsawIUHMPcEbSxjcLy5oDl/lHUX8khsUdjhWnhWTcAGNJhWQNcT7YTUOOCgJJhaQNcSx24MpzC8ykjG8WluPzS2KeGuBIkGRNd56B1o7vmaBJCCtryJgdgT/TARJpDXE0Nlk7qB/dFmO7IWfKTqrA83H7IndQyQqoKV9wCkwlbFnOGmgUfMkIjA93ZFvWO18hhZb5ERdc7ljzwRJY7g9Zg5vjIpO8cofQsjrG4eeyKuj+k7fnWPHzO3O4MXChlKCB/a75NnPwhui/kM6umDr2iWzoGVlYPthlqiTXFQBWuTKG3ih1PAM4VZXynANIRiUdPKxxAOBK2YsmK8YfCiXUwQqxElbG9WE/KQlNUSHUcTePQGkrB6C2QInfBWGNVhooB/8GR+XVIPjCY9vEeAlAqRz1qyW10wAjDteflo77ksRgnDeVYzlpMw83BVHoLxeLpR9GgQZsDLcnihTU5k0DO6heNlVFJur3zlmr1jitUL5Va/V2p/zA/gU74/0UW68tGwAAAABJRU5ErkJggg==">');
+var $thingTpl = $('<div class="plugin-thing"><img style="width:' + thingWidth + ';display:block;"  src="data:image/png;base64,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"></div>');
 },{"../":6}],4:[function(require,module,exports){
 'use strict';
 
@@ -739,7 +929,7 @@ function init(api) {
     window.jQuery = jQuery;
     window.$ = jQuery;
     require('jquery.easing');
-    require("jquery-image-explode");
+    require("./jquery-image-explode");
     require("./commands/boom.js");
     require("./commands/system.js");
     require("./commands/shit.js");
@@ -778,14 +968,24 @@ if (module) {
     module.exports = _exports;
 }
 exports.default = _exports;
-},{"./commands/boom.js":2,"./commands/capture.js":3,"./commands/shit.js":4,"./commands/system.js":5,"jquery":8,"jquery-image-explode":7,"jquery.easing":9}],7:[function(require,module,exports){
+},{"./commands/boom.js":2,"./commands/capture.js":3,"./commands/shit.js":4,"./commands/system.js":5,"./jquery-image-explode":7,"jquery":8,"jquery.easing":9}],7:[function(require,module,exports){
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 (function ($) {
     "use strict";
-    const wrapperName = "explode-wrapper";
+
+    var wrapperName = "explode-wrapper";
+    if (!$) {
+        console.error("jQuery is needed.");
+        return;
+    }
     $.fn.explodeRestore = function () {
-        this.each(function () { //explode separately
-            const $dom = $(this);
-            const wrapper = $dom.prop(wrapperName);
+        this.each(function () {
+            //explode separately
+            var $dom = $(this);
+            var wrapper = $dom.prop(wrapperName);
             if (wrapper) {
                 wrapper.replaceWith($dom);
                 $dom.prop(wrapperName, null);
@@ -793,38 +993,56 @@ exports.default = _exports;
         });
     };
     $.fn.explode = function (opt) {
-        if (!opt || typeof opt !== "object") {
+        if (!opt || (typeof opt === "undefined" ? "undefined" : _typeof(opt)) !== "object") {
             opt = {};
         }
 
-        const {
-            minWidth = 3,
-                omitLastLine = false,
-                radius = 80,
-                minRadius = 0,
-                release = true,
-                fadeTime = 300,
-                recycle = true,
-                recycleDelay = 500,
-                fill = true,
-                explodeTime = 300,
-                maxAngle = 360,
-                gravity = 0,
-                round = false,
-                groundDistance = 400,
-                ignoreCompelete = false,
-        } = opt;
+        var _opt = opt,
+            _opt$minWidth = _opt.minWidth,
+            minWidth = _opt$minWidth === undefined ? 3 : _opt$minWidth,
+            _opt$omitLastLine = _opt.omitLastLine,
+            omitLastLine = _opt$omitLastLine === undefined ? false : _opt$omitLastLine,
+            _opt$radius = _opt.radius,
+            radius = _opt$radius === undefined ? 80 : _opt$radius,
+            _opt$minRadius = _opt.minRadius,
+            minRadius = _opt$minRadius === undefined ? 0 : _opt$minRadius,
+            _opt$release = _opt.release,
+            release = _opt$release === undefined ? true : _opt$release,
+            _opt$fadeTime = _opt.fadeTime,
+            fadeTime = _opt$fadeTime === undefined ? 300 : _opt$fadeTime,
+            _opt$recycle = _opt.recycle,
+            recycle = _opt$recycle === undefined ? true : _opt$recycle,
+            _opt$recycleDelay = _opt.recycleDelay,
+            recycleDelay = _opt$recycleDelay === undefined ? 500 : _opt$recycleDelay,
+            _opt$fill = _opt.fill,
+            fill = _opt$fill === undefined ? true : _opt$fill,
+            _opt$explodeTime = _opt.explodeTime,
+            explodeTime = _opt$explodeTime === undefined ? 300 : _opt$explodeTime,
+            _opt$maxAngle = _opt.maxAngle,
+            maxAngle = _opt$maxAngle === undefined ? 360 : _opt$maxAngle,
+            _opt$gravity = _opt.gravity,
+            gravity = _opt$gravity === undefined ? 0 : _opt$gravity,
+            _opt$round = _opt.round,
+            round = _opt$round === undefined ? false : _opt$round,
+            _opt$groundDistance = _opt.groundDistance,
+            groundDistance = _opt$groundDistance === undefined ? 400 : _opt$groundDistance,
+            _opt$ignoreCompelete = _opt.ignoreCompelete,
+            ignoreCompelete = _opt$ignoreCompelete === undefined ? false : _opt$ignoreCompelete,
+            _opt$land = _opt.land,
+            land = _opt$land === undefined ? true : _opt$land,
+            checkOutBound = _opt.checkOutBound,
+            finish = _opt.finish;
+        var _opt2 = opt,
+            maxWidth = _opt2.maxWidth;
 
-        let {
-            maxWidth
-        } = opt;
 
-        const $target = this;
-        let $targetImage;
-        const args = arguments;
-        if ($target.length > 1) { //explode separately
+        var $target = this;
+        var $targetImage = void 0;
+        var args = arguments;
+        if ($target.length > 1) {
+            //explode separately
             $target.each(function () {
-                const $dom = $(this);
+                var $dom = $(this);
                 $dom.explode.apply($dom, args);
             });
             return;
@@ -843,34 +1061,34 @@ exports.default = _exports;
             $targetImage = $target;
         } else if ($target.css("backgroundImage") !== "none") {
 
-            const src = $target.css("backgroundImage").match(/url\(\"([\S\s]*)\"\)/)[1];
+            var src = $target.css("backgroundImage").match(/url\(\"([\S\s]*)\"\)/)[1];
             $targetImage = $("<img/>", {
-                src
+                src: src
             });
             if (!opt.ignoreCompelete) {
-                $targetImage.on("load", function () {                    
+                $targetImage.on("load", function () {
                     opt.ignoreCompelete = true;
                     $target.explode.apply($target, [opt]);
                 });
                 return;
-            } 
+            }
         }
 
-        const w = $target.width();
-        const h = $target.height();
-        const minorDimension = Math.min(w, h);
-        const radiusData = getRadiusData();
+        var w = $target.width();
+        var h = $target.height();
+        var minorDimension = Math.min(w, h);
+        var radiusData = getRadiusData();
 
-        const ctxWidth = Math.max(w, radius * 2);
-        const ctxHeight = Math.max(h, radius * 2, groundDistance * 2);
+        var ctxWidth = Math.max(w, radius * 2);
+        var ctxHeight = Math.max(h, radius * 2, groundDistance * 2);
         if (!maxWidth) {
             maxWidth = minorDimension / 4;
         }
-        const $wrapper = $("<div></div>", {
-            "class": wrapperName,
+        var $wrapper = $("<div></div>", {
+            "class": wrapperName
         });
-        const syncStyles = ["width", "height", "margin-top", "margin-right", "margin-bottom", "margin-left", "position", "top", "right", "bottom", "left", "float", "display"];
-        syncStyles.forEach((v) => {
+        var syncStyles = ["width", "height", "margin-top", "margin-right", "margin-bottom", "margin-left", "position", "top", "right", "bottom", "left", "float", "display"];
+        syncStyles.forEach(function (v) {
             $wrapper.css(v, $target.css(v));
         });
         //        $wrapper.css("background-color", "black");
@@ -878,23 +1096,23 @@ exports.default = _exports;
             $wrapper.css("position", "relative");
         }
 
-        const startRatio = 0.3;
+        var startRatio = 0.3;
 
         //generate rags' body
-        const rags = generateRags();
+        var rags = generateRags();
         getRagsFinalState();
 
-        const $canvas = $("<canvas></canvas>");
+        var $canvas = $("<canvas></canvas>");
 
         //standard canvas, to draw the ideal target
-        const $canvas0 = $("<canvas></canvas>");
+        var $canvas0 = $("<canvas></canvas>");
         $canvas0.css({
             width: w,
-            height: h,
+            height: h
         });
         $canvas0.attr({
             width: w,
-            height: h,
+            height: h
         });
 
         $canvas.css({
@@ -905,72 +1123,75 @@ exports.default = _exports;
             bottom: (h - ctxHeight) / 2,
             margin: "auto",
             width: ctxWidth,
-            height: ctxHeight,
+            height: ctxHeight
         });
         $canvas.attr({
             width: ctxWidth,
-            height: ctxHeight,
+            height: ctxHeight
         });
 
         $wrapper.append($canvas);
 
-        const ctx = $canvas[0].getContext("2d");
-        const ctx0 = $canvas0[0].getContext("2d");
+        var ctx = $canvas[0].getContext("2d");
+        var ctx0 = $canvas0[0].getContext("2d");
 
-        const {
-            naturalWidth,
-            naturalHeight
-        } = $targetImage[0];
+        var _$targetImage$ = $targetImage[0],
+            naturalWidth = _$targetImage$.naturalWidth,
+            naturalHeight = _$targetImage$.naturalHeight;
+
         if ($target.prop("tagName") === "IMG") {
             ctx0.drawImage($targetImage[0], 0, 0, naturalWidth, naturalHeight, 0, 0, w, h);
         } else if ($target.css("backgroundImage") !== "none") {
-            let dx = 0,
-                dy = 0,
-                dWidth = naturalWidth,
-                dHeight = naturalHeight;
-            let config = {
-                'background-repeat': $target.css("background-repeat"),
-                "background-size": $target.css("background-size"),
-                'background-position-x':$target.css("background-position-x"),
-                'background-position-y':$target.css("background-position-y"),
-            }
-   
-            function warn(key) {
-                console.warn(`Unsupported ${key} style:${config[key]}`);
-            }
-            const ratioW = w / naturalWidth;
-            const ratioH = h / naturalHeight;                       
-            
-            
-            if (config["background-size"] === "cover") {
-                const ratio = Math.max(ratioW, ratioH);
-             
-                dWidth = naturalWidth * ratio;
-                dHeight = naturalHeight * ratio;
-            } else if (config["background-size"] === "contain") {
-                const ratio = Math.min(ratioW, ratioH);
-             
-                dWidth = naturalWidth * ratio;
-                dHeight = naturalHeight * ratio;
-            } else {
-                warn("background-size");
+            var i;
+            var j;
 
-            }
-            dx=parseInt(config['background-position-x'])/100*(w-dWidth);
-            dy=parseInt(config['background-position-y'])/100*(h-dHeight);
-       
-            if (config["background-repeat"] === "repeat") {
-                for (var i = 0-Math.ceil(dx/dWidth); i < w / dWidth+Math.ceil(-dx/dWidth); i++) {
-                    for (var j = 0-Math.ceil(dy/dHeight); j < h / dHeight+Math.ceil(-dy/dHeight); j++) {
-                        ctx0.drawImage($targetImage[0], 0, 0, naturalWidth, naturalHeight, dx+i * dWidth, dy+j * dHeight, dWidth, dHeight);
-                    }
+            (function () {
+                var warn = function warn(key) {
+                    console.warn("Unsupported " + key + " style:" + config[key]);
+                };
+
+                var dx = 0,
+                    dy = 0,
+                    dWidth = naturalWidth,
+                    dHeight = naturalHeight;
+                var config = {
+                    'background-repeat': $target.css("background-repeat"),
+                    "background-size": $target.css("background-size"),
+                    'background-position-x': $target.css("background-position-x"),
+                    'background-position-y': $target.css("background-position-y")
+                };
+
+                var ratioW = w / naturalWidth;
+                var ratioH = h / naturalHeight;
+
+                if (config["background-size"] === "cover") {
+                    var ratio = Math.max(ratioW, ratioH);
+
+                    dWidth = naturalWidth * ratio;
+                    dHeight = naturalHeight * ratio;
+                } else if (config["background-size"] === "contain") {
+                    var _ratio = Math.min(ratioW, ratioH);
+
+                    dWidth = naturalWidth * _ratio;
+                    dHeight = naturalHeight * _ratio;
+                } else {
+                    warn("background-size");
                 }
-            } else if (config["background-repeat"] === 'no-repeat') {
-                ctx0.drawImage($targetImage[0], 0, 0, naturalWidth, naturalHeight, dx, dy, dWidth, dHeight);
-            } else {
-                warn("background-repeat");
-            }
+                dx = parseInt(config['background-position-x']) / 100 * (w - dWidth);
+                dy = parseInt(config['background-position-y']) / 100 * (h - dHeight);
 
+                if (config["background-repeat"] === "repeat") {
+                    for (i = 0 - Math.ceil(dx / dWidth); i < w / dWidth + Math.ceil(-dx / dWidth); i++) {
+                        for (j = 0 - Math.ceil(dy / dHeight); j < h / dHeight + Math.ceil(-dy / dHeight); j++) {
+                            ctx0.drawImage($targetImage[0], 0, 0, naturalWidth, naturalHeight, dx + i * dWidth, dy + j * dHeight, dWidth, dHeight);
+                        }
+                    }
+                } else if (config["background-repeat"] === 'no-repeat') {
+                    ctx0.drawImage($targetImage[0], 0, 0, naturalWidth, naturalHeight, dx, dy, dWidth, dHeight);
+                } else {
+                    warn("background-repeat");
+                }
+            })();
         } else if ($target.css("backgroundColor") !== "rgba(0, 0, 0, 0)") {
             ctx0.fillStyle = $target.css("backgroundColor");
             ctx0.fillRect(0, 0, w, h);
@@ -978,57 +1199,55 @@ exports.default = _exports;
             console.warn("There's nothing to explode.");
         }
 
-
-        const scaleX = 1;
-        const scaleY = 1;
-        rags.forEach((rag) => {
-            const {
-                left,
-                top,
-                width: ragWidth,
-                height: ragHeight,
-            } = rag;
+        var scaleX = 1;
+        var scaleY = 1;
+        rags.forEach(function (rag) {
+            var left = rag.left,
+                top = rag.top,
+                ragWidth = rag.width,
+                ragHeight = rag.height;
 
 
             rag.naturalParams = [left, top, ragWidth, ragHeight];
-
         });
 
         $target.after($wrapper);
         $target.prop(wrapperName, $wrapper);
-        $target.detach();        
+        $target.detach();
 
-        let biasVy = 0;
+        var biasVy = 0;
+
         explode(function () {
             if (release) {
                 doRelease();
             } else if (recycle) {
                 doRecycle();
+            } else {
+                finish && finish();
             }
         });
 
         function doRelease(cb) {
-            const startTime = Date.now();
-            let leftCnt = rags.length;
+            var startTime = Date.now();
+            var leftCnt = rags.length;
 
-            rags.forEach((rag) => {
+            rags.forEach(function (rag) {
                 rag.time1 = 1000 / (rag.ratio * (maxWidth + 1 - rag.width) / maxWidth + 0.1);
                 rag.time2 = rag.time1 + fadeTime;
             });
             draw();
 
             function draw() {
-                const time = Date.now();
-                const duration = time - startTime;
+                var time = Date.now();
+                var duration = time - startTime;
 
                 ctx.clearRect(0, 0, ctxWidth, ctxHeight);
 
-                rags.forEach((rag) => {
+                rags.forEach(function (rag) {
                     ctx.save();
-                    const {
-                        width: ragWidth,
-                        height: ragHeight,
-                    } = rag;
+                    var ragWidth = rag.width,
+                        ragHeight = rag.height;
+
 
                     ctx.translate(rag.biasx, rag.biasy);
 
@@ -1040,7 +1259,7 @@ exports.default = _exports;
                         ctx.closePath();
                         ctx.clip();
                     }
-                    let alpha;
+                    var alpha = void 0;
                     if (duration < rag.time1) {
                         alpha = 1;
                     } else if (duration > rag.time2) {
@@ -1070,40 +1289,39 @@ exports.default = _exports;
                     $target.explodeRestore();
                 }, true);
             }, recycleDelay);
-
         }
 
-
-
         function explode(cb, reverse) {
-            const startTime = Date.now();
-            let lastTime = startTime;
-            let leftCnt = rags.length;
+            var startTime = Date.now();
+            var lastTime = startTime;
+            var leftCnt = rags.length;
 
             if (!reverse) {
-                rags.forEach((rag) => {
+                rags.forEach(function (rag) {
                     rag.vx = rag.translateX / explodeTime * 1000;
                     rag.vy = rag.translateY / explodeTime * 1000;
 
                     rag.biasx = rag.translateX0;
                     rag.biasy = rag.translateY0;
-                    rag.transYMax = ctxHeight / 2 + groundDistance - rag.height / 2;
+                    if (gravity) {
+                        rag.transYMax = ctxHeight / 2 + groundDistance - rag.height / 2;
+                    }
                 });
             }
 
             draw();
 
             function draw() {
-                const time = Date.now();
-                let ratio;
-                let angleRatio;
+                var time = Date.now();
+                var ratio = void 0;
+                var angleRatio = void 0;
                 ratio = (time - lastTime) / 1000;
                 angleRatio = (time - startTime) / explodeTime;
                 if (reverse) {
                     angleRatio = 1 - angleRatio;
                 }
                 if (gravity) {
-                    biasVy += (gravity * ratio) * 300;
+                    biasVy += gravity * ratio * 300;
                 } else {
                     if (angleRatio > 1 || angleRatio < 0) {
                         cb && cb();
@@ -1116,23 +1334,27 @@ exports.default = _exports;
                 }
                 lastTime = time;
                 ctx.clearRect(0, 0, ctxWidth, ctxHeight);
-                rags.forEach((rag) => {
+                rags.forEach(function (rag) {
                     ctx.save();
-                    const {
-                        width: ragWidth,
-                        height: ragHeight,
-                    } = rag;
+                    var ragWidth = rag.width,
+                        ragHeight = rag.height;
+
 
                     if (!rag.land) {
                         rag.biasx += rag.vx * ratio;
                         rag.biasy += (rag.vy + biasVy) * ratio;
 
                         if (gravity) {
-                            if (rag.biasy > rag.transYMax) {
+                            if (checkOutBound && checkOutBound(rag) || rag.biasy > rag.transYMax || rag.biasy < rag.height / 2) {
                                 leftCnt--;
                                 rag.land = true;
                                 rag.lastAngle = rag.finalAngleRad * angleRatio;
-                                rag.biasy = rag.transYMax;
+
+                                if (land) {
+                                    rag.biasy = gravity > 0 ? rag.transYMax : rag.height / 2;
+                                } else {
+                                    rag.biasy = rag.transYMax * 2; //hide
+                                }
                             }
                         }
                     }
@@ -1169,75 +1391,70 @@ exports.default = _exports;
 
         //generate final position and angle of rags
         function getRagsFinalState() {
-            rags.forEach((v, i) => {
-                const finalAngle = (((Math.random() * maxAngle * 2) - maxAngle) / ((Math.random() + 2) * v.width)) * 10;
+            rags.forEach(function (v, i) {
+                var finalAngle = (Math.random() * maxAngle * 2 - maxAngle) / ((Math.random() + 2) * v.width) * 10;
 
                 //coordinate based on center point
-                let x = v.left + v.width / 2 - w / 2;
-                let y = v.top + v.width / 2 - h / 2;
+                var x = v.left + v.width / 2 - w / 2;
+                var y = v.top + v.width / 2 - h / 2;
 
                 if (x === 0) {
                     x = i % 2 ? -1 : 1;
                 }
                 if (y === 0) {
-                    y = (i % 4 < 2) ? -1 : 1;
+                    y = i % 4 < 2 ? -1 : 1;
                 }
 
-                const distance = Math.sqrt(x * x + y * y);
+                var distance = Math.sqrt(x * x + y * y);
 
-
-                let ratio = ((1 - startRatio) * (1 - (v.width - minWidth) / (maxWidth - minWidth)) + startRatio) * Math.random();
+                var ratio = ((1 - startRatio) * (1 - (v.width - minWidth) / (maxWidth - minWidth)) + startRatio) * Math.random();
                 ratio = 1 - (1 - ratio) * (1 - minRadius / radius);
 
-                const finalDistance = (radius - distance) * ratio + distance;
-                const distanceSquare = distance * distance;
+                var finalDistance = (radius - distance) * ratio + distance;
+                var distanceSquare = distance * distance;
 
-                const attach = {
-                    finalDistance,
-                    ratio,
-                    x,
-                    y,
-                    distance,
-                    translateX: (finalDistance - distance) * Math.sqrt((distanceSquare - y * y) / (distanceSquare)) * (x > 0 ? 1 : -1),
-                    translateY: (finalDistance - distance) * Math.sqrt((distanceSquare - x * x) / (distanceSquare)) * (y > 0 ? 1 : -1),
+                var attach = {
+                    finalDistance: finalDistance,
+                    ratio: ratio,
+                    x: x,
+                    y: y,
+                    distance: distance,
+                    translateX: (finalDistance - distance) * Math.sqrt((distanceSquare - y * y) / distanceSquare) * (x > 0 ? 1 : -1),
+                    translateY: (finalDistance - distance) * Math.sqrt((distanceSquare - x * x) / distanceSquare) * (y > 0 ? 1 : -1),
                     translateX0: (ctxWidth - w) / 2 + v.left + v.width / 2,
                     translateY0: (ctxHeight - h) / 2 + v.top + v.height / 2,
-                    finalAngle,
-                    finalAngleRad: finalAngle * (Math.PI / 180),
+                    finalAngle: finalAngle,
+                    finalAngleRad: finalAngle * (Math.PI / 180)
                 };
 
-                for (let i in attach) {
-                    v[i] = attach[i];
+                for (var _i in attach) {
+                    v[_i] = attach[_i];
                 }
-
             });
         }
         //generate inital position and dimension of rags
         //rewrite it to fit for you demand
         function generateRags() {
-            let rowCnt;
-            const base = [[0, 1], [1, 1], [1, 0], [0, 0]];
+            var rowCnt = void 0;
+            var base = [[0, 1], [1, 1], [1, 0], [0, 0]];
             if (omitLastLine) {
                 rowCnt = Math.floor(h / maxWidth);
             } else {
                 rowCnt = Math.ceil(h / maxWidth);
             }
 
-            const rags = [];
+            var rags = [];
 
-            const noRadius = radiusData.every(function (v) {
-                return v === 0
+            var noRadius = radiusData.every(function (v) {
+                return v === 0;
             });
 
-            for (let row = 0; row < rowCnt; row++) {
+            for (var row = 0; row < rowCnt; row++) {
                 generateRow(row);
             }
 
             function isInner(x, y) {
-                if (x < radiusData[0] && y > h - radiusData[0] ||
-                    x > w - radiusData[1] && y > h - radiusData[1] ||
-                    x > w - radiusData[2] && y < radiusData[2] ||
-                    x < radiusData[3] && y < radiusData[3]) {
+                if (x < radiusData[0] && y > h - radiusData[0] || x > w - radiusData[1] && y > h - radiusData[1] || x > w - radiusData[2] && y < radiusData[2] || x < radiusData[3] && y < radiusData[3]) {
                     return false;
                 }
                 return true;
@@ -1247,53 +1464,52 @@ exports.default = _exports;
                 return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) < d * d;
             }
 
+            function tryPushRag(_ref) {
+                var left = _ref.left,
+                    top = _ref.top,
+                    width = _ref.width,
+                    height = _ref.height;
 
-            function tryPushRag({
-                left,
-                top,
-                width,
-                height
-            }) {
-                const x = left + width / 2;
-                const y = h - top - height / 2;
+                var x = left + width / 2;
+                var y = h - top - height / 2;
 
                 if (noRadius || isInner(x, y) || radiusData.some(function (v, i) {
-                        return distanceLessThan(x, y, base[i][0] * w + 2 * (0.5 - base[i][0]) * v, base[i][1] * h + 2 * (0.5 - base[i][1]) * v, v);
-                    })) {
+                    return distanceLessThan(x, y, base[i][0] * w + 2 * (0.5 - base[i][0]) * v, base[i][1] * h + 2 * (0.5 - base[i][1]) * v, v);
+                })) {
                     rags.push({
-                        left,
-                        top,
-                        width,
-                        height
+                        left: left,
+                        top: top,
+                        width: width,
+                        height: height
                     });
                 }
             }
 
             function generateRow(row) {
-                let rowSum = 0;
-                const topBase = row * maxWidth;
+                var rowSum = 0;
+                var topBase = row * maxWidth;
 
                 function generate(width) {
-                    const left = rowSum;
+                    var left = rowSum;
                     rowSum += width;
                     tryPushRag({
-                        left,
+                        left: left,
                         top: topBase,
-                        width,
-                        height: width,
+                        width: width,
+                        height: width
                     });
                     if (fill) {
-                        for (let i = 1; i < parseInt(maxWidth / width); i++) {
+                        for (var _i2 = 1; _i2 < parseInt(maxWidth / width); _i2++) {
                             tryPushRag({
-                                left,
-                                top: topBase + i * width,
-                                width,
-                                height: width,
+                                left: left,
+                                top: topBase + _i2 * width,
+                                width: width,
+                                height: width
                             });
                         }
                     }
                 }
-                let width;
+                var width = void 0;
                 do {
                     if (width) {
                         generate(width);
@@ -1313,10 +1529,10 @@ exports.default = _exports;
         }
         //get an array of 4 corners of radius        
         function getRadiusData() {
-            let ret = ["border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius"];
-            const width = $target.width();
+            var ret = ["border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius"];
+            var width = $target.width();
             ret = ret.map(function (key) {
-                let radius = $target.css(key);
+                var radius = $target.css(key);
                 if (radius.match(/px$/)) {
                     return radius.match(/^\d+/)[0] * 1;
                 } else if (radius.match(/%$/)) {
@@ -1326,7 +1542,7 @@ exports.default = _exports;
             });
             ret = ret.map(function (radius) {
                 if (radius > width / 2) {
-                    radius = width / 2
+                    radius = width / 2;
                 }
                 return radius;
             });
