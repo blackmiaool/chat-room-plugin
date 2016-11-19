@@ -113,7 +113,7 @@ function render(info, isNew) {
         var bounceRate = 1 / 8;
         var shakeDeg = 15;
         var $redState = $('<div style="opacity:0;height:10px;width:10px;position:absolute;left:0;right:0;top:0;bottom:0;margin:auto;border-radius:5px;background-color:rgba(200,30,70,0.7);"></div>');
-        var $shadow = $('<div style="height:60px;\n                                        width:60px;     \n                                        position: absolute;\n                                        top: 0;\n                                        overflow: hidden;\n                                        transform:rotate(45deg) translateX(27px) translateY(25px);\n                                        filter: blur(20px);">\n                                        <div style="width: 200px;\n                                            height: 200px;\n                                            background-color: rgb(200,30,70);\n                                            position: absolute;\n                                            left: -180px;\n                                            top: -180px;">\n                                        </div>\n                                    </div>');
+        var $shadow = $('<div style="height: 60px;\n                                width: 60px;\n                                position: absolute;\n                                top: -85.75px;\n                                overflow: hidden;\n                                transform: rotate(45deg) translateX(27px) translateY(25px);\n                                left: 62.5px;">\n                                        <div style="position: absolute;\n                                            left: -60px;\n                                            box-shadow: 8px 12px 80px rgba(200,30,70,0.7);\n                                            top: -60px;\n                                            width: 60px;\n                                            height: 60px;">\n                                        </div>\n                                    </div>');
         var animate = $thing.css('opacity', '0').css('position', 'relative').animate({
             opacity: '1'
         }, {
@@ -148,7 +148,7 @@ function render(info, isNew) {
             top: pos1.top - pos2.top - floatHeight,
             borderSpacing: 1000
         }, {
-            duration: 100,
+            duration: 150,
             easing: 'linear',
             step: function step(now, fx) {
                 if (fx.prop === 'borderSpacing') {
@@ -162,6 +162,7 @@ function render(info, isNew) {
                     top: $thing.css("top")
                 });
                 $(this).append($redState);
+
                 $(this).after($shadow);
                 $redState.animate({
                     opacity: 1

@@ -21,7 +21,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^2.0.0",
     "jquery": "^3.1.1",
-    "jquery-image-explode": "^1.0.11",
+    "jquery-image-explode": "^1.0.14",
     "less": "^2.7.1"
   }
 }
